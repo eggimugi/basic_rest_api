@@ -5,6 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 // file ini digunakan untuk mendefinisikan struktur database yang dibuat
+// setiap mengubah file schema.prisma harus disinkronkan ulang ke database atau dimigrate dan digenerate ulang di terminal
+// dengan command : npx prisma migrate dev dan npx prisma generate
 
 generator client {
   provider = "prisma-client-js"
@@ -24,6 +26,7 @@ model medicine {
   price              Float                @default(0) @db.Double
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @default(now())
+  photo              String               @default("")
   transaction_detail transaction_detail[]
 }
 
