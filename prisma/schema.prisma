@@ -59,6 +59,15 @@ model transaction_detail {
   medicine_detail    medicine    @relation(fields: [medicine_id], references: [id])
 }
 
+model admin {
+  id         Int      @id @default(autoincrement())
+  admin_name String   @default("")
+  email      String   @unique @default("")
+  password   String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
 enum DrugType {
   Syrup
   Tablet

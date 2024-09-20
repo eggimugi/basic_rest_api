@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { number } from "joi";
+import path from "path";
+import fs from "fs";
+import { ROOT_DIRECTORY } from "../config";
 
 // create object of prisma
 const prisma = new PrismaClient({ errorFormat: "minimal" });
@@ -72,6 +75,23 @@ const updateMedicine = async (req: Request, res: Response) => {
       });
     }
 
+    // check change file or not
+    if (req.file) {
+      // assume that user want to replace photo
+
+      // define the old of file name
+      let oldFileName = findMedicine.photo;
+      // define path / location of old file
+      let pathFile = `${ROOT_DIRECTORY}/public/medicine-photo/${oldFileName}`;
+      // check is file exists
+      let existsFile = fs.existsSync(pathFile);
+
+      if (existsFile && oldFileName !== ``) {
+        // delete the old file
+        fs.unlinkSync(pathFile);
+      }
+    }
+
     // read a property of medicine from request body
     // di bawah ini adalah bentuk singkat dari menuliskan apa aja yang dikirimkan request body-nya
     const { name, stock, price, type, exp_date } = req.body;
@@ -88,6 +108,7 @@ const updateMedicine = async (req: Request, res: Response) => {
         price: price ? Number(price) : findMedicine.price,
         exp_date: exp_date ? new Date(exp_date) : findMedicine.exp_date,
         type: type ? type : findMedicine.type,
+        photo: req.file ? req.file.filename : findMedicine.photo,
       },
     });
 
@@ -115,6 +136,15 @@ const deleteMedicine = async (req: Request, res: Response) => {
       return res.status(200).json({
         message: `Medicine is not found`,
       });
+    }
+
+    // delete the file
+    let oldFileName = findMedicine.photo
+    let pathFile = `${ROOT_DIRECTORY}/public/medicine-photo/${oldFileName}`
+    let existsFile = fs.existsSync(pathFile)
+
+    if (existsFile && oldFileName !== ``) {
+      fs.unlinkSync(pathFile)
     }
 
     // delete medicine

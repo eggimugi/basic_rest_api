@@ -13,7 +13,7 @@ router.get(`/`, readMedicine);
 
 // route for update medicine
 // /:id = diisi dengan tempat "id" yang mau diubah
-router.put(`/:id`, [updateValidation], updateMedicine);
+router.put(`/:id`, [uploadMedicinePhoto.single(`photo`), updateValidation], updateMedicine);
 
 // route for remove medicine
 router.delete(`/:id`, deleteMedicine);
