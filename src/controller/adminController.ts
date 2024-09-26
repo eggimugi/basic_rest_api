@@ -1,8 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import { ROOT_DIRECTORY } from "../config";
-import path from "path";
-import fs from "fs";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient({ errorFormat: "minimal" });
 
@@ -12,11 +11,26 @@ const createAdmin = async (req: Request, res: Response) => {
     const email: string = req.body.email;
     const password: string = req.body.password;
 
+    const findEmail = await prisma.admin.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (findEmail) {
+      return res.status(400).json({
+        message: `Email has exists, please try another email!`,
+      });
+    }
+
+    const hashPassword = await bcrypt.hash(password, 12);
+    // 12 adalah perulangan dari enkripsinya atau password akan diacak sebanyak 12x
+
     const newAdmin = await prisma.admin.create({
       data: {
         admin_name,
         email,
-        password,
+        password: hashPassword,
       },
     });
     return res.status(200).json({
@@ -71,7 +85,7 @@ const updateAdmin = async (req: Request, res: Response) => {
       data: {
         admin_name: admin_name ? admin_name : findAdmin.admin_name,
         email: email ? email : findAdmin.email,
-        password: password ? password : findAdmin.password,
+        password: password ? await bcrypt.hash(password, 12) : findAdmin.password,
       },
     });
 
@@ -115,4 +129,30 @@ const deleteAdmin = async (req: Request, res: Response) => {
   }
 };
 
-export { createAdmin, readAdmin, updateAdmin, deleteAdmin };
+const authentication = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const findAdmin = await prisma.admin.findFirst({ where: { email } });
+    if (!findAdmin) {
+      return res.status(200).json({ message: "Email not registerd" });
+    }
+    const isMatchPassword = await bcrypt.compare(password, findAdmin.password);
+    if (!isMatchPassword) {
+      return res.status(200).json({ message: "Invalid Password" });
+    }
+    // prepare to generate token using JWT \\
+    const payload = {
+      admin_name: findAdmin.admin_name,
+      email: findAdmin.email,
+    };
+    const signature = process.env.SECRET || ``;
+
+    const token = jwt.sign(payload, signature);
+
+    return res.status(200).json({ logged: true, token, id: findAdmin.id, admin_name: findAdmin.admin_name, email: findAdmin.email });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+export { createAdmin, readAdmin, updateAdmin, deleteAdmin, authentication };
