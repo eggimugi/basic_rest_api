@@ -20,4 +20,18 @@ const createValidation = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-export { createValidation };
+const updateSchema = Joi.object({
+  cashier_name: Joi.string().optional(),
+  order_date: Joi.date().optional(),
+  transaction_detail: Joi.array().items(detailsSchema).min(1).optional(),
+});
+
+const updateValidation = (req: Request, res: Response, next: NextFunction) => {
+  const validate = updateSchema.validate(req.body);
+  if (validate.error) {
+    return res.status(400).json(validate.error.details.map((item) => item.message).join());
+  }
+  next();
+};
+
+export { createValidation, updateValidation };

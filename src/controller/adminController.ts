@@ -134,7 +134,7 @@ const authentication = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const findAdmin = await prisma.admin.findFirst({ where: { email } });
     if (!findAdmin) {
-      return res.status(200).json({ message: "Email not registerd" });
+      return res.status(200).json({ message: "Email not registered" });
     }
     const isMatchPassword = await bcrypt.compare(password, findAdmin.password);
     if (!isMatchPassword) {
@@ -151,6 +151,8 @@ const authentication = async (req: Request, res: Response) => {
 
     return res.status(200).json({ logged: true, token, id: findAdmin.id, admin_name: findAdmin.admin_name, email: findAdmin.email });
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).json(error);
   }
 };
